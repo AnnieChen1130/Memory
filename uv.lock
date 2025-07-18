@@ -3,6 +3,24 @@ revision = 2
 requires-python = "==3.10.*"
 
 [[package]]
+name = "accelerate"
+version = "1.9.0"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "psutil" },
+    { name = "pyyaml" },
+    { name = "safetensors" },
+    { name = "torch" },
+]
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/0e8/c61f81af7bf37/accelerate-1.9.0.tar.gz", hash = "sha256:0e8c61f81af7bf37195b6175a545ed292617dd90563c88f49020aea5b6a0b47f" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/c24/739a97ade1d54/accelerate-1.9.0-py3-none-any.whl", hash = "sha256:c24739a97ade1d54af4549a65f8b6b046adc87e2b3e4d6c66516e32c53d5a8f1" },
+]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
@@ -306,6 +324,15 @@ wheels = [
 ]
 
 [[package]]
+name = "einops"
+version = "0.8.1"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/de5/d960a7a761225/einops-0.8.1.tar.gz", hash = "sha256:de5d960a7a761225532e0f1959e5315ebeafc0cd43394732f103ca44b9837e84" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/919/387eb55330f57/einops-0.8.1-py3-none-any.whl", hash = "sha256:919387eb55330f5757c6bea9165c5ff5cfe63a642682ea788a6d472576d81737" },
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
@@ -356,6 +383,18 @@ source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
 sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/adb/c88eabb99d2fe/filelock-3.18.0.tar.gz", hash = "sha256:adbc88eabb99d2fec8c9c1b229b171f18afa655400173ddc653d5d01501fb9f2" }
 wheels = [
     { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/c40/1f4f8377c4464/filelock-3.18.0-py3-none-any.whl", hash = "sha256:c401f4f8377c4464e6db25fff06205fd89bdd83b65eb0488ed1b160f780e21de" },
+]
+
+[[package]]
+name = "flash-attn"
+version = "2.8.1"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+dependencies = [
+    { name = "einops" },
+    { name = "torch" },
+]
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/fbe/83568418e456d/flash_attn-2.8.1-cp310-cp310-linux_aarch64.whl", hash = "sha256:fbe83568418e456d329d9c832ded3ee25305015336d10b1af5e9727f598df884" },
 ]
 
 [[package]]
@@ -500,6 +539,22 @@ dependencies = [
 sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/ca8/15841e1a41a1e/ipython-8.37.0.tar.gz", hash = "sha256:ca815841e1a41a1e6b73a0b08f3038af9b2252564d01fc405356d34033012216" }
 wheels = [
     { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/ed8/7326596b87893/ipython-8.37.0-py3-none-any.whl", hash = "sha256:ed87326596b878932dbcb171e3e698845434d8c61b8d8cd474bf663041a9dcf2" },
+]
+
+[[package]]
+name = "ipywidgets"
+version = "8.1.7"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+dependencies = [
+    { name = "comm" },
+    { name = "ipython" },
+    { name = "jupyterlab-widgets" },
+    { name = "traitlets" },
+    { name = "widgetsnbextension" },
+]
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/15f/1ac050b9ccbef/ipywidgets-8.1.7.tar.gz", hash = "sha256:15f1ac050b9ccbefd45dccfbb2ef6bed0029d8278682d569d71b8dd96bee0376" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/764/f2602d25471c2/ipywidgets-8.1.7-py3-none-any.whl", hash = "sha256:764f2602d25471c213919b8a1997df04bef869251db4ca8efba1b76b1bd9f7bb" },
 ]
 
 [[package]]
@@ -761,6 +816,15 @@ wheels = [
 ]
 
 [[package]]
+name = "jupyterlab-widgets"
+version = "3.0.15"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/292/0888a0c292235/jupyterlab_widgets-3.0.15.tar.gz", hash = "sha256:2920888a0c2922351a9202817957a68c07d99673504d6cd37345299e971bb08b" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/d59/023d7d7ef7140/jupyterlab_widgets-3.0.15-py3-none-any.whl", hash = "sha256:d59023d7d7ef71400d51e6fee9a88867f6e65e10a4201605d2d7f3e8f012a31c" },
+]
+
+[[package]]
 name = "lazy-loader"
 version = "0.4"
 source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
@@ -810,6 +874,19 @@ wheels = [
 ]
 
 [[package]]
+name = "loguru"
+version = "0.7.3"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/194/80589e77d47b8/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/31a/33c10c8e1e104/loguru-0.7.3-py3-none-any.whl", hash = "sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.2"
 source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
@@ -844,10 +921,14 @@ name = "memory"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "accelerate" },
     { name = "asyncpg" },
     { name = "fastapi" },
+    { name = "flash-attn" },
     { name = "httpx" },
     { name = "librosa" },
+    { name = "loguru" },
+    { name = "ninja" },
     { name = "numpy" },
     { name = "pgvector" },
     { name = "pydantic" },
@@ -856,21 +937,27 @@ dependencies = [
     { name = "sentence-transformers" },
     { name = "torch" },
     { name = "transformers" },
+    { name = "triton" },
     { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "ipywidgets" },
     { name = "mypy" },
     { name = "notebook" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "accelerate", specifier = ">=1.9.0" },
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "fastapi", specifier = ">=0.104.0" },
+    { name = "flash-attn", specifier = ">=2.8.1" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "librosa", specifier = ">=0.11.0" },
+    { name = "loguru", specifier = ">=0.7.3" },
+    { name = "ninja", specifier = ">=1.11.1.4" },
     { name = "numpy", specifier = "<2" },
     { name = "pgvector", specifier = ">=0.2.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
@@ -879,11 +966,13 @@ requires-dist = [
     { name = "sentence-transformers", specifier = ">=2.7.0" },
     { name = "torch", specifier = ">=2.8.0" },
     { name = "transformers", specifier = ">=4.51.0" },
+    { name = "triton", specifier = ">=3.4.0" },
     { name = "uvicorn", specifier = ">=0.24.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "mypy", specifier = ">=1.17.0" },
     { name = "notebook", specifier = ">=7.4.4" },
 ]
@@ -1028,6 +1117,30 @@ source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
 sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/307/c3669428c5362/networkx-3.4.2.tar.gz", hash = "sha256:307c3669428c5362aab27c8a1260aa8f47c4e91d3891f48be0141738d8d053e1" }
 wheels = [
     { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/df5/d4365b724cf81/networkx-3.4.2-py3-none-any.whl", hash = "sha256:df5d4365b724cf81b8c6a7312509d0c22386097011ad1abe274afd5e9d3bbc5f" },
+]
+
+[[package]]
+name = "ninja"
+version = "1.11.1.4"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/6aa/39f6e894e0452/ninja-1.11.1.4.tar.gz", hash = "sha256:6aa39f6e894e0452e5b297327db00019383ae55d5d9c57c73b04f13bf79d438a" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/b33/923c8da88e8da/ninja-1.11.1.4-py3-none-macosx_10_9_universal2.whl", hash = "sha256:b33923c8da88e8da20b6053e38deb433f53656441614207e01d283ad02c5e8e7" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/ced/e0af00b58e27b/ninja-1.11.1.4-py3-none-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:cede0af00b58e27b31f2482ba83292a8e9171cdb9acc2c867a3b6e40b3353e43" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/096/487995473320d/ninja-1.11.1.4-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:096487995473320de7f65d622c3f1d16c3ad174797602218ca8c967f51ec38a0" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/d30/90d4488fadf60/ninja-1.11.1.4-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d3090d4488fadf6047d0d7a1db0c9643a8d391f0d94729554dbb89b5bdc769d7" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/ecc/e44a00325a936/ninja-1.11.1.4-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:ecce44a00325a93631792974659cf253a815cc6da4ec96f89742925dfc295a0d" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/9c2/9bb66d2aa46a2/ninja-1.11.1.4-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:9c29bb66d2aa46a2409ab369ea804c730faec7652e8c22c1e428cc09216543e5" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/055/f386fb550c2c9/ninja-1.11.1.4-py3-none-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:055f386fb550c2c9d6157e45e20a84d29c47968876b9c5794ae2aec46f952306" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/f61/86d7607bb090c/ninja-1.11.1.4-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:f6186d7607bb090c3be1e10c8a56b690be238f953616626f5032238c66e56867" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/cf4/453679d15babc/ninja-1.11.1.4-py3-none-musllinux_1_1_i686.whl", hash = "sha256:cf4453679d15babc04ba023d68d091bb613091b67101c88f85d2171c6621c6eb" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/d4a/6f159b08b0ac4/ninja-1.11.1.4-py3-none-musllinux_1_1_ppc64le.whl", hash = "sha256:d4a6f159b08b0ac4aca5ee1572e3e402f969139e71d85d37c0e2872129098749" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/c3b/96bd875f3ef1d/ninja-1.11.1.4-py3-none-musllinux_1_1_s390x.whl", hash = "sha256:c3b96bd875f3ef1db782470e9e41d7508905a0986571f219d20ffed238befa15" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/cf5/54e73f72c04de/ninja-1.11.1.4-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:cf554e73f72c04deb04d0cf51f5fdb1903d9c9ca3d2344249c8ce3bd616ebc02" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/cfd/d09776436a1ff/ninja-1.11.1.4-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:cfdd09776436a1ff3c4a2558d3fc50a689fb9d7f1bdbc3e6f7b8c2991341ddb3" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/2ab/67a41c90bea5e/ninja-1.11.1.4-py3-none-win32.whl", hash = "sha256:2ab67a41c90bea5ec4b795bab084bc0b3b3bb69d3cd21ca0294fc0fc15a111eb" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/461/7b3c12ff64b61/ninja-1.11.1.4-py3-none-win_amd64.whl", hash = "sha256:4617b3c12ff64b611a7d93fd9e378275512bb36eff8babff7c83f5116b4f8d66" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/571/3cf50c5be5008/ninja-1.11.1.4-py3-none-win_arm64.whl", hash = "sha256:5713cf50c5be50084a8693308a63ecf9e55c3132a78a41ab1363a28b6caaaee1" },
 ]
 
 [[package]]
@@ -1912,6 +2025,17 @@ wheels = [
 ]
 
 [[package]]
+name = "triton"
+version = "3.4.0"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+dependencies = [
+    { name = "setuptools" },
+]
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/af1/feae19b9abe36/triton-3.4.0-cp310-cp310-linux_aarch64.whl", hash = "sha256:af1feae19b9abe365741254d9366581bbf625647529865766696af48936aa7d6" },
+]
+
+[[package]]
 name = "types-python-dateutil"
 version = "2.9.0.20250708"
 source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
@@ -2007,4 +2131,22 @@ source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
 sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/323/9df9f44da632f/websocket_client-1.8.0.tar.gz", hash = "sha256:3239df9f44da632f96012472805d40a23281a991027ce11d2f45a6f24ac4c3da" }
 wheels = [
     { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/17b/44cc997f5c498/websocket_client-1.8.0-py3-none-any.whl", hash = "sha256:17b44cc997f5c498e809b22cdf2d9c7a9e71c02c8cc2b6c56e7c2d1239bfa526" },
+]
+
+[[package]]
+name = "widgetsnbextension"
+version = "4.0.14"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/a36/29b04e3edb893/widgetsnbextension-4.0.14.tar.gz", hash = "sha256:a3629b04e3edb893212df862038c7232f62973373869db5084aed739b437b5af" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/487/5a9eaf72fbf50/widgetsnbextension-4.0.14-py3-none-any.whl", hash = "sha256:4875a9eaf72fbf5079dc372a51a9f268fc38d46f767cbf85c43a36da5cb9b575" },
+]
+
+[[package]]
+name = "win32-setctime"
+version = "1.2.0"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/ae1/fdf948f5640aa/win32_setctime-1.2.0.tar.gz", hash = "sha256:ae1fdf948f5640aae05c511ade119313fb6a30d7eabe25fef9764dca5873c4c0" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/95d/644c4e708aba8/win32_setctime-1.2.0-py3-none-any.whl", hash = "sha256:95d644c4e708aba81dc3704a116d8cbc974d70b3bdb8be1d150e36be6e9d1390" },
 ]

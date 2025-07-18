@@ -46,6 +46,7 @@
             pg_with_extension
 	    start_db
 	    pkgs.uv
+	    pkgs.ninja
 	  ];
         };
       });
