@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+import torch
 from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -19,6 +20,8 @@ from src.utils.models import (
     MemoryItemResponse,
     RetrievalResponse,
 )
+
+torch.set_float32_matmul_precision("high")
 
 # Global instances - will be initialized during startup
 db_manager: Optional[DatabaseManager] = None
