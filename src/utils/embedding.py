@@ -2,9 +2,11 @@
 Embedding generation service for the Memory System
 """
 
-from typing import List, Optional
+from typing import Optional
 
+import numpy as np
 import torch
+from loguru import logger
 from sentence_transformers import SentenceTransformer
 
 
@@ -26,6 +28,7 @@ class EmbeddingService:
             model_kwargs = {
                 "attn_implementation": "flash_attention_2",
                 "device_map": "auto",
+                "torch_dtype": torch.float16,
             }
             tokenizer_kwargs = {"padding_side": "left"}
 
@@ -35,9 +38,12 @@ class EmbeddingService:
                 model_kwargs=model_kwargs,
                 tokenizer_kwargs=tokenizer_kwargs,
             )
-        except Exception:
+            logger.info(f"Embedding model {self.model_name} initialized with flash attention.")
+        except Exception as e:
+            logger.error(f"Failed to initialize model with flash attention: {e}")
             # Fallback to basic initialization if flash attention fails
             self.model = SentenceTransformer(self.model_name)
+            logger.warning(f"Using Embedding model {self.model_name} without flash attention.")
 
     def get_model_version(self) -> str:
         """Get the current model version string"""
@@ -49,52 +55,13 @@ class EmbeddingService:
             return 2560
         return self.model.get_sentence_embedding_dimension() or 2560
 
-    def chunk_text(
-        self, text: str, max_tokens: int = 512, overlap: int = 15
-    ) -> List[str]:
-        """
-        Split long text into chunks for embedding.
-
-        Args:
-            text: Text to chunk
-            max_tokens: Maximum tokens per chunk (approximate)
-            overlap: Number of words to overlap between chunks
-
-        Returns:
-            List of text chunks
-        """
-        if not text or not text.strip():
-            return []
-
-        # Simple word-based chunking (can be enhanced with proper tokenization)
-        words = text.split()
-        if len(words) <= max_tokens:
-            return [text]
-
-        chunks: List[str] = []
-        start = 0
-
-        while start < len(words):
-            end = min(start + max_tokens, len(words))
-            chunk_words = words[start:end]
-            chunks.append(" ".join(chunk_words))
-
-            if end >= len(words):
-                break
-            start = end - overlap
-
-        return chunks
-
-    def encode(
-        self, text: str, is_query: bool = False, max_tokens: int = 512
-    ) -> List[float]:
+    def encode(self, text: str, is_query: bool = False) -> np.ndarray:
         """
         Generate embedding for text content.
 
         Args:
             text: Text to encode
             is_query: If True, uses query prompt. If False, encodes content without prompt.
-            max_tokens: Maximum tokens per chunk for long content (ignored for queries)
 
         Returns:
             Single embedding vector
@@ -103,41 +70,10 @@ class EmbeddingService:
             raise RuntimeError("Model not initialized. Call initialize() first.")
 
         if not text or not text.strip():
-            return [0.0] * self.get_embedding_dimension()
+            return np.zeros(self.get_embedding_dimension(), dtype=np.float32)
 
-        # Queries
-        if is_query:
-            embedding = self.model.encode(
-                text, prompt_name="query", convert_to_numpy=True
-            )
-            return embedding.tolist()
+        prompt_name = "query" if is_query else None
+        embedding = self.model.encode(text, prompt_name=prompt_name, convert_to_numpy=True)
+        logger.debug(f"Generated embedding for text: {text[:50]}... with shape {embedding.shape}")
 
-        # Content
-        words = text.split()
-        if len(words) <= max_tokens:
-            embedding = self.model.encode(text, convert_to_numpy=True)
-            return embedding.tolist()
-
-        # Long content
-        chunks = self.chunk_text(text, max_tokens)
-        if not chunks:
-            return [0.0] * self.get_embedding_dimension()
-
-        embeddings = self.model.encode(chunks, convert_to_numpy=True)
-        chunk_embeddings = embeddings.tolist()
-
-        # Average the embeddings
-        if len(chunk_embeddings) == 1:
-            return chunk_embeddings[0]
-
-        # Compute element-wise average
-        dim = len(chunk_embeddings[0])
-        averaged = [0.0] * dim
-
-        for embedding in chunk_embeddings:
-            for i in range(dim):
-                averaged[i] += embedding[i]
-
-        # Normalize by number of chunks
-        num_chunks = len(chunk_embeddings)
-        return [val / num_chunks for val in averaged]
+        return embedding
