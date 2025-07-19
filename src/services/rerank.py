@@ -6,6 +6,7 @@ Implements a two-stage retrieval process:
 2. Reranking using a more sophisticated model for final ordering
 """
 
+import gc
 from typing import Any, Dict, List, Optional, Tuple
 
 import torch
@@ -22,6 +23,7 @@ class RerankingService:
         self.model = None
         self.tokenizer = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self._initialized = False
 
         # Model-specific tokens and settings
         self.token_false_id: Optional[int] = None
@@ -35,8 +37,10 @@ class RerankingService:
             "Given a content matching query, retrieve relevant passages that answer the query"
         )
 
-    async def initialize(self):
-        """Initialize the reranking model"""
+    async def __aenter__(self):
+        if self._initialized:
+            return self
+
         try:
             # Load tokenizer and model
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, padding_side="left")
@@ -78,12 +82,12 @@ class RerankingService:
                 self.suffix_tokens = self.tokenizer.encode(suffix, add_special_tokens=False)
 
             print(f"Successfully loaded {self.model_name}")
+            self._initialized = True
+            return self
 
         except Exception as e:
             print(f"Failed to load {self.model_name}: {e}")
-            # For now, set model to None - could implement a fallback later
-            self.model = None
-            self.tokenizer = None
+            raise RuntimeError(f"Could not initialize model {self.model_name}. ") from e
 
     def _format_instruction(self, instruction: Optional[str], query: str, doc: str) -> str:
         """Format the instruction for the reranker model"""
@@ -197,3 +201,20 @@ class RerankingService:
     def get_model_version(self) -> str:
         """Get the model name/version for tracking"""
         return self.model_name
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Clean up resources when exiting the context manager"""
+        if not self._initialized:
+            return
+
+        print(f"Exiting RerankingService. Releasing resources for {self.model_name}...")
+
+        del self.model, self.tokenizer
+        self.model, self.tokenizer = None, None
+        self._initialized = False
+
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print(f"Resources for RerankingService: {self.model_name} have been released.")

@@ -2,6 +2,7 @@
 Embedding generation service for the Memory System
 """
 
+import gc
 from typing import Optional
 
 import numpy as np
@@ -17,9 +18,13 @@ class EmbeddingService:
         self.model_name = model_name
         self.model: Optional[SentenceTransformer] = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._initialized = False
 
-    async def initialize(self):
-        """Initialize the embedding model"""
+    async def __aenter__(self):
+        """Initialize the embedding model as an async context manager"""
+        if self._initialized:
+            return self
+
         model_kwargs = {}
         tokenizer_kwargs = {}
 
@@ -44,6 +49,9 @@ class EmbeddingService:
             # Fallback to basic initialization if flash attention fails
             self.model = SentenceTransformer(self.model_name)
             logger.warning(f"Using Embedding model {self.model_name} without flash attention.")
+
+        self._initialized = True
+        return self
 
     def get_model_version(self) -> str:
         """Get the current model version string"""
@@ -77,3 +85,20 @@ class EmbeddingService:
         logger.debug(f"Generated embedding for text: {text[:50]}... with shape {embedding.shape}")
 
         return embedding
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Clean up resources when exiting the context manager"""
+        if not self._initialized:
+            return
+
+        logger.info(f"Exiting EmbeddingService. Releasing resources for {self.model_name}...")
+
+        del self.model
+        self.model = None
+        self._initialized = False
+
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        logger.info(f"Resources for EmbeddingService: {self.model_name} have been released.")

@@ -71,8 +71,8 @@ class ImageAnalysisService:
 
         logger.info(f"Analyzing image: {image_uri}")
         try:
-            # image = await self._load_image(image_uri)
-            image = image_uri
+            image = await self._load_image(image_uri)
+            # image = image_uri
 
             # Prepare the prompt based on existing caption
             if existing_caption:
@@ -105,7 +105,7 @@ class ImageAnalysisService:
 
     # def _model_inference(self, image: Image.Image, prompt_text: str) -> str:
     @logger.catch()
-    def _model_inference(self, image, prompt_text: str) -> str:
+    def _model_inference(self, image: Image.Image, prompt_text: str) -> str:
         assert self.model is not None, "Model not initialized. Call initialize() first."
         assert self.processor is not None, "Processor not initialized. Call initialize() first."
 
@@ -175,7 +175,7 @@ class ImageAnalysisService:
         if not self._initialized:
             return
 
-        logger.info(f"Exiting context. Releasing resources for model {self.model_id}...")
+        logger.info(f"Exiting ImageAnalysisService. Releasing resources for {self.model_id}...")
 
         del self.model, self.processor
         self.model, self.processor = None, None
@@ -185,4 +185,4 @@ class ImageAnalysisService:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-        logger.info(f"Resources for ImageAnalysisService: {self.model_id} have been released.")
+        logger.info(f"Resources for Image Analysis: {self.model_id} have been released.")
