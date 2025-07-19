@@ -20,7 +20,7 @@
     	  export DB_DIR="$PWD/pg_data"
 	  export PATH="${pg_with_extension}/bin:$PATH"
     
-  	  if [ ! -d "$DB_DIR/PG_VERSION" ]; then
+  	  if [ ! -f "$DB_DIR/PG_VERSION" ]; then
   	    echo "--- Initializing PostgreSQL in $DB_DIR ---"
   	    initdb -D "$DB_DIR" -U $USER
   	    # Socket and port
