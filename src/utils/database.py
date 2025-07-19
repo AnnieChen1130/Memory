@@ -5,6 +5,7 @@ from uuid import UUID
 
 import asyncpg
 import numpy as np
+from loguru import logger
 from pgvector.asyncpg import register_vector
 
 from src.utils.models import MemoryItem, MemoryItemRaw, Relationship
@@ -32,6 +33,7 @@ class DatabaseManager:
         if self.pool:
             await self.pool.close()
 
+    @logger.catch()
     async def create_memory_item(
         self,
         item_data: MemoryItemRaw,

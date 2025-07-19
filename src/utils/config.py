@@ -11,9 +11,7 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # Database configuration
-    database_url: str = (
-        "postgresql://sunya@/postgres?host=/home/sunya/dev/memory/pg_data"
-    )
+    database_url: str = "postgresql://sunya@/postgres?host=/home/sunya/dev/memory/pg_data"
 
     # API configuration
     api_host: str = "0.0.0.0"
@@ -30,7 +28,7 @@ class Settings(BaseSettings):
 
     # Development settings
     debug: bool = False
-    reload: bool = False
+    reload: bool = True
 
     class Config:
         env_file = ".env"

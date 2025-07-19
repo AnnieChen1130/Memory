@@ -7,11 +7,11 @@ from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.uri_handler import parse
+from src.services.embedding import EmbeddingService
+from src.services.rerank import RerankingService
 from src.uri_handler.task_queue import BackgroundTaskManager
 from src.utils.config import settings
 from src.utils.database import DatabaseManager
-from src.utils.embedding import EmbeddingService
 from src.utils.models import (
     IngestionResponse,
     MemoryItem,
@@ -19,7 +19,6 @@ from src.utils.models import (
     MemoryItemResponse,
     RetrievalResponse,
 )
-from src.utils.reranking import RerankingService
 
 # Global instances - will be initialized during startup
 db_manager: Optional[DatabaseManager] = None
@@ -56,7 +55,6 @@ async def lifespan(app: FastAPI):
 
         yield
     finally:
-        # Clean shutdown
         if task_manager:
             await task_manager.stop_workers()
         if db_manager:
@@ -94,7 +92,7 @@ AuthDep = Depends(get_api_key_verification)
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

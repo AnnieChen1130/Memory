@@ -3,14 +3,26 @@ Main entry point for the Memory System
 """
 
 import uvicorn
+from loguru import logger
 
 from src.utils.config import settings
+
+# logger.remove()
+
+logger.add(
+    "logs/{time}.log",
+    level="DEBUG",
+    rotation="500 MB",
+    compression="zip",
+    enqueue=True,
+    serialize=False,
+)
 
 
 def main():
     """Run the Memory System API server"""
-    print("Starting Memory System API...")
-    print(f"Database URL: {settings.database_url}")
+    logger.info("Starting Memory System API...")
+    logger.info(f"Database URL: {settings.database_url}")
     print(f"Embedding Model: {settings.embedding_model}")
 
     uvicorn.run(
