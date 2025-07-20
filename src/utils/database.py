@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
@@ -18,34 +19,39 @@ class DatabaseManager:
         self.database_url = database_url
         self.pool: asyncpg.Pool
 
-    async def initialize(self):
-        """Initialize database connection pool"""
-        self.pool = await asyncpg.create_pool(
-            self.database_url, min_size=5, max_size=20, command_timeout=60
-        )
-
-        # Register pgvector types
-        async with self.pool.acquire() as conn:
+    async def __aenter__(self):
+        async def init_conn(conn: asyncpg.Connection):
             await register_vector(conn)
 
-    async def close(self):
-        """Close database connection pool"""
+        self.pool = await asyncpg.create_pool(
+            self.database_url, min_size=5, max_size=20, command_timeout=60, init=init_conn
+        )
+
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.pool:
             await self.pool.close()
+        logger.info("Database connection pool closed.")
 
     @logger.catch()
     async def create_memory_item(
         self,
         item_data: MemoryItemRaw,
         analyzed_text: Optional[str] = None,
-        embedding: Optional[List[float]] = None,
+        embedding: Optional[np.ndarray] = None,
         embedding_model_version: Optional[str] = None,
         parent_id: Optional[UUID] = None,
     ) -> MemoryItem:
-        """Create a new MemoryItem in the database"""
         async with self.pool.acquire() as conn:
-            # Convert embedding to numpy array if provided
-            embedding_array = np.array(embedding, dtype=np.float16) if embedding else None
+            embedding_array: Optional[np.ndarray] = None
+            if embedding is not None:
+                if isinstance(embedding, np.ndarray) and embedding.dtype == np.float16:
+                    embedding_array = embedding
+                elif isinstance(embedding, np.ndarray):
+                    embedding_array = embedding.astype(np.float16)
+                else:
+                    embedding_array = np.array(embedding, dtype=np.float16)
 
             row = await conn.fetchrow(
                 """
@@ -54,7 +60,7 @@ class DatabaseManager:
                     embedding, embedding_model_version, meta, event_timestamp
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
-            """,
+                """,
                 parent_id,
                 item_data.content_type,
                 item_data.text_content,
@@ -66,30 +72,29 @@ class DatabaseManager:
                 item_data.event_timestamp,
             )
 
-            # Convert the row to a MemoryItem
             item = self._row_to_memory_item(row)
 
-            # Create relationship if this is a reply
-            if item_data.reply_to_id:
-                await self.create_relationship(
-                    source_node_id=item.id,
-                    target_node_id=item_data.reply_to_id,
-                    relationship_type="reply_to",
-                )
+            # TODO: Create relationship
+            # if item_data.reply_to_id:
+            #     await self.create_relationship(
+            #         source_node_id=item.id,
+            #         target_node_id=item_data.reply_to_id,
+            #         relationship_type="reply_to",
+            #     )
 
             return item
 
+    @logger.catch()
     async def create_relationship(
         self, source_node_id: UUID, target_node_id: UUID, relationship_type: str
     ) -> Relationship:
-        """Create a new relationship between MemoryItems"""
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
                 INSERT INTO Relationships (source_node_id, target_node_id, relationship_type)
                 VALUES ($1, $2, $3)
                 RETURNING *
-            """,
+                """,
                 source_node_id,
                 target_node_id,
                 relationship_type,
@@ -97,21 +102,77 @@ class DatabaseManager:
 
             return self._row_to_relationship(row)
 
+    @logger.catch()
     async def get_memory_item(self, item_id: UUID) -> Optional[MemoryItem]:
-        """Get a MemoryItem by ID"""
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
                 SELECT * FROM MemoryItems WHERE id = $1
-            """,
+                """,
                 item_id,
             )
 
             return self._row_to_memory_item(row) if row else None
 
+    @logger.catch()
+    async def update_memory_item(
+        self,
+        item_id: UUID,
+        analyzed_text: Optional[str] = None,
+        embedding: Optional[np.ndarray] = None,
+        embedding_model_version: Optional[str] = None,
+    ) -> Optional[MemoryItem]:
+        async with self.pool.acquire() as conn:
+            # Embedding
+            embedding_array: Optional[np.ndarray] = None
+            if embedding is not None:
+                if isinstance(embedding, np.ndarray) and embedding.dtype == np.float16:
+                    embedding_array = embedding
+                elif isinstance(embedding, np.ndarray):
+                    embedding_array = embedding.astype(np.float16)
+                else:
+                    embedding_array = np.array(embedding, dtype=np.float16)
+
+            # Prepare update fields
+            update_fields = ["updated_at = NOW()"]
+            params = []
+            param_idx = 1
+
+            if analyzed_text is not None:
+                update_fields.append(f"analyzed_text = ${param_idx}")
+                params.append(analyzed_text)
+                param_idx += 1
+
+            if embedding_array is not None:
+                update_fields.append(f"embedding = ${param_idx}")
+                params.append(embedding_array)
+                param_idx += 1
+
+            if embedding_model_version is not None:
+                update_fields.append(f"embedding_model_version = ${param_idx}")
+                params.append(embedding_model_version)
+                param_idx += 1
+
+            # Nothing to update
+            if len(params) == 0:
+                return await self.get_memory_item(item_id)
+
+            # Add item_id as the last parameter
+            params.append(item_id)
+
+            query = f"""
+                UPDATE MemoryItems 
+                SET {", ".join(update_fields)}
+                WHERE id = ${param_idx}
+                RETURNING *
+            """
+
+            row = await conn.fetchrow(query, *params)
+            return self._row_to_memory_item(row) if row else None
+
     async def search_memory_items(
         self,
-        query_embedding: List[float],
+        query_embedding: np.ndarray,
         top_k: int = 10,
         content_types: Optional[List[str]] = None,
         start_date: Optional[datetime] = None,
@@ -205,12 +266,10 @@ class DatabaseManager:
     async def get_chunk_siblings(self, chunk_id: UUID) -> List[MemoryItem]:
         """Get all chunks that belong to the same parent article"""
         async with self.pool.acquire() as conn:
-            # First get the parent_id of this chunk
             chunk = await self.get_memory_item(chunk_id)
             if not chunk or not chunk.parent_id:
                 return []
 
-            # Get all chunks with the same parent
             rows = await conn.fetch(
                 """
                 SELECT * FROM MemoryItems 
@@ -229,37 +288,31 @@ class DatabaseManager:
         Aggregate chunk results by parent article to avoid redundant results
         Returns the best-scoring chunk per parent article
         """
-        parent_groups: Dict[Optional[UUID], List[Tuple[MemoryItem, float]]] = {}
+        parent_groups: defaultdict[UUID, List[Tuple[MemoryItem, float]]] = defaultdict(list)
         standalone_items: List[Tuple[MemoryItem, float]] = []
 
         # Group chunks by parent article
         for item, score in search_results:
-            if item.content_type == "article_chunk" and item.parent_id:
-                if item.parent_id not in parent_groups:
-                    parent_groups[item.parent_id] = []
+            if item.content_type == "text_chunk" and item.parent_id:
                 parent_groups[item.parent_id].append((item, score))
             else:
                 standalone_items.append((item, score))
 
-        # For each parent group, keep only the best-scoring chunk
+        # For each parent group, keep only the best-scoring chunk(s)
         aggregated_results = standalone_items.copy()
 
         for _parent_id, chunk_results in parent_groups.items():
-            # Sort by score and take the best one
             chunk_results.sort(key=lambda x: x[1], reverse=True)
-            best_chunk, best_score = chunk_results[0]
+            top_chunks = chunk_results[:3]
+            aggregated_results.extend(top_chunks)
 
-            # Optionally enhance with context from surrounding chunks
-            # For now, just add the best chunk
-            aggregated_results.append((best_chunk, best_score))
-
-        # Sort final results by score
         aggregated_results.sort(key=lambda x: x[1], reverse=True)
         return aggregated_results
 
     def _row_to_memory_item(self, row) -> MemoryItem:
-        """Convert database row to MemoryItem model"""
-        embedding = row["embedding"].tolist() if row["embedding"] is not None else None
+        embedding: Optional[List[float]] = None
+        if row["embedding"] is not None:
+            embedding = row["embedding"].to_list()
         meta = json.loads(row["meta"]) if row["meta"] else None
 
         return MemoryItem(
@@ -278,7 +331,6 @@ class DatabaseManager:
         )
 
     def _row_to_relationship(self, row) -> Relationship:
-        """Convert database row to Relationship model"""
         return Relationship(
             id=row["id"],
             source_node_id=row["source_node_id"],

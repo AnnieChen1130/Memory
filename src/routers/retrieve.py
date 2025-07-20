@@ -60,7 +60,7 @@ async def retrieve_memory_items(
         if content_types:
             content_types_list = [ct.strip() for ct in content_types.split(",")]
 
-        # Initial vector search - get more candidates for reranking
+        # Initial vector search (get more candidates for reranking)
         initial_k = min(top_k * 3, 100) if enable_reranking and reranking_service else top_k
 
         search_results = await db_manager.search_memory_items(

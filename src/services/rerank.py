@@ -10,6 +10,7 @@ import gc
 from typing import Any, Dict, List, Optional, Tuple
 
 import torch
+from loguru import logger
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.utils.models import MemoryItem
@@ -162,9 +163,8 @@ class RerankingService:
         items = []
 
         for item, _ in candidates:
-            # Use analyzed_text if available, otherwise fall back to text_content
             text = item.analyzed_text or item.text_content or ""
-            if text.strip():  # Only include items with actual text content
+            if text.strip():
                 formatted_input = self._format_instruction(instruction, query, text)
                 pairs.append(formatted_input)
                 items.append(item)
@@ -177,25 +177,17 @@ class RerankingService:
             inputs = self._process_inputs(pairs)
             scores = self._compute_logits(inputs)
 
-            # Pair items with their new scores
             reranked = list(zip(items, scores, strict=True))
-
-            # Sort by reranking score (higher is better)
             reranked.sort(key=lambda x: float(x[1]), reverse=True)
 
-            # Convert back to the expected type format
             result: List[Tuple[MemoryItem, float]] = [
                 (item, float(score)) for item, score in reranked
             ]
 
-            # Apply top_k limit if specified
-            if top_k:
-                result = result[:top_k]
-
-            return result
+            return result[:top_k] if top_k else result
 
         except Exception as e:
-            print(f"Reranking failed, returning original order: {e}")
+            logger.error(f"Reranking failed, returning original order: {e}")
             return candidates
 
     def get_model_version(self) -> str:
@@ -207,7 +199,7 @@ class RerankingService:
         if not self._initialized:
             return
 
-        print(f"Exiting RerankingService. Releasing resources for {self.model_name}...")
+        logger.info(f"Exiting RerankingService. Releasing resources for {self.model_name}...")
 
         del self.model, self.tokenizer
         self.model, self.tokenizer = None, None
@@ -217,4 +209,4 @@ class RerankingService:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-        print(f"Resources for RerankingService: {self.model_name} have been released.")
+        logger.info(f"Resources for RerankingService: {self.model_name} have been released.")

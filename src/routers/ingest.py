@@ -27,14 +27,14 @@ async def ingest_memory_item(
     """
     logger.debug(
         "\n"
-        "┌─────────────────────┬────────────────────────────────────────────────────────────────┐\n"
-        f"│ content_type        │ {item_data.content_type!r:<60} │\n"
-        f"│ text_content        │ {item_data.text_content!r:<60} │\n"
-        f"│ data_uri            │ {item_data.data_uri!r:<60} │\n"
-        f"│ event_timestamp     │ {item_data.event_timestamp.isoformat():<60} │\n"
-        f"│ meta                │ {str(item_data.meta)!r:<60} │\n"
-        f"│ reply_to_id         │ {str(item_data.reply_to_id)!r:<60} │\n"
-        "└─────────────────────┴────────────────────────────────────────────────────────────────┘"
+        "┌─────────────────┬────────────────────────────────────────────────────────────────┐\n"
+        f"│ content_type    │ {item_data.content_type!r:<60} │\n"
+        f"│ text_content    │ {item_data.text_content!r:<60} │\n"
+        f"│ data_uri        │ {item_data.data_uri!r:<60} │\n"
+        f"│ event_timestamp │ {item_data.event_timestamp.isoformat():<60} │\n"
+        f"│ meta            │ {str(item_data.meta)!r:<60} │\n"
+        f"│ reply_to_id     │ {str(item_data.reply_to_id)!r:<60} │\n"
+        "└─────────────────┴────────────────────────────────────────────────────────────────┘"
     )
 
     try:
@@ -66,8 +66,11 @@ async def ingest_memory_item(
             if num_paragraphs > 0 or num_sentences > 20:
                 item_data = item_data.model_copy(update={"content_type": "long_text"})
 
-        if item_data.content_type in async_content_types and item_data.data_uri:
-            should_process_async = True
+        if item_data.content_type in async_content_types:
+            if item_data.data_uri:
+                should_process_async = True
+            if item_data.content_type == "long_text":
+                should_process_async = True
 
         # Trigger async processing
         if should_process_async and task_manager:
@@ -84,7 +87,7 @@ async def ingest_memory_item(
             elif item_data.content_type == "image":
                 task = create_image_analysis_task(memory_item, item_data.data_uri)
                 await task_manager.enqueue_task(task)
-            elif item_data.content_type == "audio_clip":
+            elif item_data.content_type == "audio":
                 task = create_audio_transcription_task(memory_item, item_data.data_uri)
                 await task_manager.enqueue_task(task)
 
