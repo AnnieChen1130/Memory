@@ -57,7 +57,7 @@ async def ingest_memory_item(
 
         # Determine if this should trigger async processing
         should_process_async = False
-        async_content_types = ["web_link", "image", "audio", "long_text"]
+        async_content_types = ["web_link", "image", "audio", "video", "long_text"]
 
         # If contains paragraphs or more than 20 sentences, mark as long_text
         if item_data.text_content:
@@ -75,8 +75,7 @@ async def ingest_memory_item(
         # Trigger async processing
         if should_process_async and task_manager:
             from src.uri_handler.task_queue import (
-                create_audio_transcription_task,
-                create_image_analysis_task,
+                create_media_analysis_task,
                 create_web_scraping_task,
             )
 
@@ -84,12 +83,14 @@ async def ingest_memory_item(
             if item_data.content_type == "web_link":
                 task = create_web_scraping_task(memory_item, item_data.data_uri)
                 await task_manager.enqueue_task(task)
-            elif item_data.content_type == "image":
-                task = create_image_analysis_task(memory_item, item_data.data_uri)
+            elif item_data.content_type in ["image", "video", "audio"]:
+                task = create_media_analysis_task(
+                    memory_item, item_data.data_uri, item_data.content_type
+                )
                 await task_manager.enqueue_task(task)
-            elif item_data.content_type == "audio":
-                task = create_audio_transcription_task(memory_item, item_data.data_uri)
-                await task_manager.enqueue_task(task)
+            logger.info(
+                f"Triggered async processing for item: {memory_item.id}, type: {item_data.content_type}"
+            )
 
         return IngestionResponse(status="ingested", item_id=memory_item.id)
 

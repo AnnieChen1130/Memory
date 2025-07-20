@@ -15,7 +15,7 @@ from uuid import UUID, uuid4
 from loguru import logger
 
 from src.services.embedding import EmbeddingService
-from src.services.image_analysis import ImageAnalysisService
+from src.services.media_analysis import MediaAnalysisService
 from src.utils.database import DatabaseManager
 from src.utils.models import MemoryItem
 
@@ -25,6 +25,7 @@ class TaskType(Enum):
     IMAGE_ANALYSIS = "image_analysis"
     AUDIO_TRANSCRIPTION = "audio_transcription"
     TEXT_ANALYSIS = "text_analysis"
+    MEDIA_ANALYSIS = "media_analysis"
 
 
 class TaskStatus(Enum):
@@ -55,7 +56,7 @@ class BackgroundTaskManager:
     def __init__(self, db_manager: DatabaseManager, embedding_service: EmbeddingService):
         self.db_manager = db_manager
         self.embedding_service = embedding_service
-        self.image_analysis_service: Optional[ImageAnalysisService] = None
+        self.media_analysis_service: Optional[MediaAnalysisService] = None
         self.task_queue: asyncio.Queue[BackgroundTask] = asyncio.Queue()
         self.running_tasks: Dict[UUID, BackgroundTask] = {}
         self.worker_count = 3  # Number of worker coroutines
@@ -65,9 +66,9 @@ class BackgroundTaskManager:
         logger.info(f"Starting {self.worker_count} background workers")
 
         try:
-            self.image_analysis_service = ImageAnalysisService()
+            self.media_analysis_service = MediaAnalysisService()
         except Exception as e:
-            logger.error(f"Failed to create image analysis service: {e}")
+            logger.error(f"Failed to create media analysis service: {e}")
 
         for i in range(self.worker_count):
             worker = asyncio.create_task(self._worker_loop(f"Worker-{i}"))
@@ -137,8 +138,8 @@ class BackgroundTaskManager:
         """Process a specific task based on its type"""
         if task.task_type == TaskType.WEB_SCRAPING:
             await self._process_web_scraping(task)
-        elif task.task_type == TaskType.IMAGE_ANALYSIS:
-            await self._process_image_analysis(task)
+        elif task.task_type == TaskType.MEDIA_ANALYSIS:
+            await self._process_media_analysis(task)
         elif task.task_type == TaskType.AUDIO_TRANSCRIPTION:
             await self._process_audio_transcription(task)
         elif task.task_type == TaskType.TEXT_ANALYSIS:
@@ -149,11 +150,18 @@ class BackgroundTaskManager:
     async def _process_web_scraping(self, task: BackgroundTask):
         pass
 
-    async def _process_image_analysis(self, task: BackgroundTask):
-        """Process image analysis task - generate description of image"""
-        image_uri = task.data.get("image_uri")
-        if not image_uri:
-            raise ValueError("No image URI provided for image analysis task")
+    async def _process_media_analysis(self, task: BackgroundTask):
+        """Process media analysis task - generate description of media"""
+        media_uri = task.data.get("media_uri")
+        if not media_uri:
+            raise ValueError("No media URI provided for media analysis task")
+
+        media_type = task.data.get("media_type")
+        if not media_type:
+            raise ValueError("No media type provided for media analysis task")
+        if media_type not in ["image", "video", "audio"]:
+            raise ValueError(f"Illegal media type: {media_type}. Should be image/video/audio.")
+        logger.info(f"Processing media analysis for {media_uri} of type {media_type}")
 
         original_item = task.source_item
         if not original_item:
@@ -162,9 +170,9 @@ class BackgroundTaskManager:
         existing_caption = original_item.text_content
 
         try:
-            assert self.image_analysis_service, "ImageAnalysisService not initialized"
-            async with self.image_analysis_service as img_service:
-                analyzed_text = await img_service.analyze_image(image_uri, existing_caption)
+            assert self.media_analysis_service, "MediaAnalysisService not initialized"
+            async with self.media_analysis_service as media_service:
+                analyzed_text = await media_service.analyze(media_uri, media_type, existing_caption)
 
             # Generate embedding for the analyzed text
             embedding = self.embedding_service.encode(analyzed_text)
@@ -202,13 +210,14 @@ def create_web_scraping_task(source_item: MemoryItem, url: str) -> BackgroundTas
     )
 
 
-def create_image_analysis_task(source_item: MemoryItem, image_uri: str) -> BackgroundTask:
-    """Create an image analysis background task"""
+def create_media_analysis_task(
+    source_item: MemoryItem, media_uri: str, media_type: str
+) -> BackgroundTask:
     return BackgroundTask(
         task_id=uuid4(),
-        task_type=TaskType.IMAGE_ANALYSIS,
+        task_type=TaskType.MEDIA_ANALYSIS,
         source_item=source_item,
-        data={"image_uri": image_uri},
+        data={"media_uri": media_uri, "media_type": media_type},
     )
 
 
@@ -229,6 +238,6 @@ __all__ = [
     "TaskType",
     "TaskStatus",
     "create_web_scraping_task",
-    "create_image_analysis_task",
+    "create_media_analysis_task",
     "create_audio_transcription_task",
 ]

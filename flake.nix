@@ -47,6 +47,7 @@
 	    start_db
 	    pkgs.uv
 	    pkgs.ninja
+	    pkgs.ffmpeg
 	  ];
         };
       });
