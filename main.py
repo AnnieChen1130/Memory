@@ -13,9 +13,7 @@ logger.add(
     "logs/{time}.log",
     level="DEBUG",
     rotation="500 MB",
-    compression="zip",
     enqueue=True,
-    serialize=False,
 )
 
 
