@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
+from tabulate import tabulate
 
 
 class MemoryItemRaw(BaseModel):
@@ -37,6 +38,23 @@ class MemoryItem(BaseModel):
     event_timestamp: datetime
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    def __str__(self) -> str:
+        headers = ["Field", "Value"]
+        table = [
+            ["id", str(self.id)],
+            ["parent_id", str(self.parent_id) if self.parent_id else "None"],
+            ["content_type", self.content_type],
+            ["text_content", self.text_content[:60] if self.text_content else "None"],
+            ["analyzed_text", self.analyzed_text[:60] if self.analyzed_text else "None"],
+            ["data_uri", self.data_uri[:60] if self.data_uri else "None"],
+            ["embedding_model_version", self.embedding_model_version or "None"],
+            ["meta", str(self.meta)[:60] if self.meta else "None"],
+            ["event_timestamp", self.event_timestamp.isoformat()],
+            ["created_at", self.created_at.isoformat()],
+            ["updated_at", self.updated_at.isoformat()],
+        ]
+        return "\n" + tabulate(table, headers=headers, tablefmt="rounded_outline")
 
 
 class Relationship(BaseModel):

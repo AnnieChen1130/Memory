@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     embedding_model: str = "Qwen/Qwen3-Embedding-4B"
     embedding_dimension: int = 2560
 
+    # Reranking configuration
+    reranking_model: str = "Qwen/Qwen3-Reranker-0.6B"
+
     # Performance configuration
     max_batch_size: int = 32
     request_timeout: int = 30

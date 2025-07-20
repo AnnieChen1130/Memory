@@ -42,6 +42,8 @@ class RerankingService:
         if self._initialized:
             return self
 
+        logger.info(f"Initializing reranking model: {self.model_name}")
+
         try:
             # Load tokenizer and model
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, padding_side="left")
@@ -82,12 +84,12 @@ class RerankingService:
                 self.prefix_tokens = self.tokenizer.encode(prefix, add_special_tokens=False)
                 self.suffix_tokens = self.tokenizer.encode(suffix, add_special_tokens=False)
 
-            print(f"Successfully loaded {self.model_name}")
+            logger.info(f"Reranking model {self.model_name} loaded.")
             self._initialized = True
             return self
 
         except Exception as e:
-            print(f"Failed to load {self.model_name}: {e}")
+            logger.error(f"Failed to load {self.model_name}: {e}")
             raise RuntimeError(f"Could not initialize model {self.model_name}. ") from e
 
     def _format_instruction(self, instruction: Optional[str], query: str, doc: str) -> str:
@@ -155,6 +157,8 @@ class RerankingService:
         Returns:
             List of (MemoryItem, rerank_score) tuples ordered by relevance
         """
+        logger.debug(f"Reranking {len(candidates)} candidates for query: {query!r}")
+
         if not self.model or not self.tokenizer or not candidates:
             return candidates
 
@@ -184,6 +188,9 @@ class RerankingService:
                 (item, float(score)) for item, score in reranked
             ]
 
+            logger.info(
+                f"Reranking completed, returning top {top_k if top_k else len(result)} results."
+            )
             return result[:top_k] if top_k else result
 
         except Exception as e:

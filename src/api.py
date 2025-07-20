@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     async with (
         DatabaseManager(settings.database_url) as db_manager,
         EmbeddingService(settings.embedding_model) as embedding_service,
-        RerankingService() as reranking_service,
+        RerankingService(settings.reranking_model) as reranking_service,
     ):
         async with BackgroundTaskManager(db_manager, embedding_service) as task_manager:
             app.state.db_manager = db_manager
@@ -29,6 +29,7 @@ async def lifespan(app: FastAPI):
             app.state.reranking_service = reranking_service
             app.state.task_manager = task_manager
 
+            logger.info("All services initialized. Application is ready.")
             yield
 
             logger.info("Application Shutting Down...")

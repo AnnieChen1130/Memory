@@ -25,6 +25,8 @@ class EmbeddingService:
         if self._initialized:
             return self
 
+        logger.info(f"Initializing embedding model: {self.model_name}")
+
         model_kwargs = {}
         tokenizer_kwargs = {}
 
@@ -74,6 +76,8 @@ class EmbeddingService:
         Returns:
             Single embedding vector
         """
+        logger.debug(f"Encoding text: {text}\nis_query={is_query}")
+
         if not self.model:
             raise RuntimeError("Model not initialized. Call initialize() first.")
 

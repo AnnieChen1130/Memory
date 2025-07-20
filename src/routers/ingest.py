@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from loguru import logger
+from tabulate import tabulate
 
 from src.routers.dependencies import (
     get_db_manager,
@@ -25,17 +26,16 @@ async def ingest_memory_item(
     Generates embeddings and stores the item in the database.
     For complex data types, triggers asynchronous processing.
     """
-    logger.debug(
-        "\n"
-        "┌─────────────────┬────────────────────────────────────────────────────────────────┐\n"
-        f"│ content_type    │ {item_data.content_type!r:<60} │\n"
-        f"│ text_content    │ {item_data.text_content!r:<60} │\n"
-        f"│ data_uri        │ {item_data.data_uri!r:<60} │\n"
-        f"│ event_timestamp │ {item_data.event_timestamp.isoformat():<60} │\n"
-        f"│ meta            │ {str(item_data.meta)!r:<60} │\n"
-        f"│ reply_to_id     │ {str(item_data.reply_to_id)!r:<60} │\n"
-        "└─────────────────┴────────────────────────────────────────────────────────────────┘"
-    )
+    headers = ["Field", "Value"]
+    params = [
+        ["content_type", item_data.content_type],
+        ["text_content", item_data.text_content[:60] if item_data.text_content else "None"],
+        ["data_uri", item_data.data_uri[:60] if item_data.data_uri else "None"],
+        ["event_timestamp", item_data.event_timestamp.isoformat()],
+        ["meta", str(item_data.meta)[:60]],
+        ["reply_to_id", str(item_data.reply_to_id)[:60]],
+    ]
+    logger.debug("Got raw data:\n" + tabulate(params, headers=headers, tablefmt="rounded_outline"))
 
     try:
         analyzed_text = item_data.text_content
@@ -54,6 +54,7 @@ async def ingest_memory_item(
             embedding=embedding,
             embedding_model_version=embedding_model_version,
         )
+        logger.info(f"MemoryItem ingested: {memory_item}")
 
         # Determine if this should trigger async processing
         should_process_async = False

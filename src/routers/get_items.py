@@ -2,6 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from loguru import logger
 
 from src.routers.dependencies import get_db_manager
 from src.utils.database import DatabaseManager
@@ -16,6 +17,8 @@ async def get_memory_item(
     db_manager: DatabaseManager = Depends(get_db_manager),
 ) -> MemoryItem:
     """Get a specific MemoryItem by ID"""
+    logger.info(f"Fetching MemoryItem with ID: {item_id}")
+
     if not db_manager:
         raise HTTPException(status_code=503, detail="Services not initialized")
 
@@ -25,6 +28,7 @@ async def get_memory_item(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Memory item not found"
             )
+        logger.info(f"MemoryItem found: {item}")
         return item
 
     except HTTPException:
@@ -43,6 +47,9 @@ async def get_related_items(
     db_manager: DatabaseManager = Depends(get_db_manager),
 ):
     """Get items related to the specified MemoryItem"""
+    logger.info(
+        f"Fetching related items for ID: {item_id}, relationship_types: {relationship_types}"
+    )
     if not db_manager:
         raise HTTPException(status_code=503, detail="Services not initialized")
 
@@ -61,6 +68,7 @@ async def get_related_items(
         for item, relationship_info in related_items:
             results.append({"item": item, "relationship": relationship_info})
 
+        logger.info(f"Related items found: {len(results)} for item {item_id}")
         return {"item_id": item_id, "related_items": results}
 
     except Exception as e:

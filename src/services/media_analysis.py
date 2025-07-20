@@ -125,7 +125,7 @@ class MediaAnalysisService:
             else:
                 final_description = description
 
-            logger.info(f"Generated model-based media description: {description[:100]}...")
+            logger.info(f"Generated model-based media description: {description}")
         except Exception as e:
             logger.error(f"Media analysis failed: {e}", exc_info=True)
             final_description = f"Caption: {existing_caption}" if existing_caption else ""
@@ -159,7 +159,6 @@ class MediaAnalysisService:
 
         generation = generation[0][input_len:]
         decoded = self.processor.decode(generation, skip_special_tokens=True)
-        logger.debug(f"Generated description: {decoded}...")
 
         return decoded.strip()
 

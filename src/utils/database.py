@@ -8,6 +8,7 @@ import asyncpg
 import numpy as np
 from loguru import logger
 from pgvector.asyncpg import register_vector
+from tabulate import tabulate
 
 from src.utils.models import MemoryItem, MemoryItemRaw, Relationship
 
@@ -18,21 +19,25 @@ class DatabaseManager:
     def __init__(self, database_url: str):
         self.database_url = database_url
         self.pool: asyncpg.Pool
+        logger.debug(f"DatabaseManager initialized with URL: {database_url}")
 
     async def __aenter__(self):
         async def init_conn(conn: asyncpg.Connection):
             await register_vector(conn)
 
+        logger.debug("pgvector extension registered for connection.")
+
+        logger.info("Creating asyncpg connection pool...")
         self.pool = await asyncpg.create_pool(
             self.database_url, min_size=5, max_size=20, command_timeout=60, init=init_conn
         )
-
+        logger.info("Database connection pool created.")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.pool:
             await self.pool.close()
-        logger.info("Database connection pool closed.")
+            logger.info("Database connection pool closed.")
 
     @logger.catch()
     async def create_memory_item(
@@ -43,6 +48,9 @@ class DatabaseManager:
         embedding_model_version: Optional[str] = None,
         parent_id: Optional[UUID] = None,
     ) -> MemoryItem:
+        logger.debug(
+            f"Creating MemoryItem: {item_data}, analyzed_text={analyzed_text}, parent_id={parent_id}"
+        )
         async with self.pool.acquire() as conn:
             embedding_array: Optional[np.ndarray] = None
             if embedding is not None:
@@ -73,6 +81,7 @@ class DatabaseManager:
             )
 
             item = self._row_to_memory_item(row)
+            logger.info(f"MemoryItem created with ID: {item.id}")
 
             # TODO: Create relationship
             # if item_data.reply_to_id:
@@ -88,6 +97,9 @@ class DatabaseManager:
     async def create_relationship(
         self, source_node_id: UUID, target_node_id: UUID, relationship_type: str
     ) -> Relationship:
+        logger.debug(
+            f"Creating Relationship: source={source_node_id}, target={target_node_id}, type={relationship_type}"
+        )
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
@@ -100,10 +112,12 @@ class DatabaseManager:
                 relationship_type,
             )
 
+            logger.info(f"Relationship created: {row['id']}")
             return self._row_to_relationship(row)
 
     @logger.catch()
     async def get_memory_item(self, item_id: UUID) -> Optional[MemoryItem]:
+        logger.debug(f"Fetching MemoryItem with ID: {item_id}")
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
@@ -112,6 +126,7 @@ class DatabaseManager:
                 item_id,
             )
 
+            logger.info(f"Fetched MemoryItem: {item_id} found={row is not None}")
             return self._row_to_memory_item(row) if row else None
 
     @logger.catch()
@@ -122,6 +137,16 @@ class DatabaseManager:
         embedding: Optional[np.ndarray] = None,
         embedding_model_version: Optional[str] = None,
     ) -> Optional[MemoryItem]:
+        headers = ["Field", "Value"]
+        params = [
+            ["item_id", str(item_id)],
+            ["analyzed_text", analyzed_text[:60] if analyzed_text else "None"],
+            ["embed_model", embedding_model_version or "None"],
+        ]
+        logger.debug(
+            "Update params:\n" + tabulate(params, headers=headers, tablefmt="rounded_outline")
+        )
+
         async with self.pool.acquire() as conn:
             # Embedding
             embedding_array: Optional[np.ndarray] = None
@@ -168,6 +193,7 @@ class DatabaseManager:
             """
 
             row = await conn.fetchrow(query, *params)
+            logger.info(f"Updated MemoryItem: {item_id} found={row is not None}")
             return self._row_to_memory_item(row) if row else None
 
     async def search_memory_items(
@@ -179,7 +205,9 @@ class DatabaseManager:
         end_date: Optional[datetime] = None,
         filters: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[MemoryItem, float]]:
-        """Search MemoryItems using vector similarity"""
+        logger.debug(
+            f"Searching MemoryItems: top_k={top_k}, content_types={content_types}, start_date={start_date}, end_date={end_date}, filters={filters}"
+        )
         async with self.pool.acquire() as conn:
             # Query conditions
             conditions = ["embedding IS NOT NULL"]
@@ -226,12 +254,15 @@ class DatabaseManager:
                 score = 1.0 / (1.0 + row["distance"])
                 results.append((item, score))
 
+            logger.info(f"Search returned {len(results)} results.")
             return results
 
     async def get_related_items(
         self, item_id: UUID, relationship_types: Optional[List[str]] = None
     ) -> List[Tuple[MemoryItem, str]]:
-        """Get items related to the given item"""
+        logger.debug(
+            f"Getting related items for: {item_id}, relationship_types={relationship_types}"
+        )
         async with self.pool.acquire() as conn:
             conditions = ["(r.source_node_id = $1 OR r.target_node_id = $1)"]
             params: List[Any] = [item_id]
@@ -261,10 +292,11 @@ class DatabaseManager:
                 relationship_info = f"{row['direction']}:{row['relationship_type']}"
                 results.append((item, relationship_info))
 
+            logger.info(f"Related items found: {len(results)} for item {item_id}")
             return results
 
     async def get_chunk_siblings(self, chunk_id: UUID) -> List[MemoryItem]:
-        """Get all chunks that belong to the same parent article"""
+        logger.debug(f"Getting chunk siblings for: {chunk_id}")
         async with self.pool.acquire() as conn:
             chunk = await self.get_memory_item(chunk_id)
             if not chunk or not chunk.parent_id:
@@ -279,15 +311,15 @@ class DatabaseManager:
                 chunk.parent_id,
             )
 
+            logger.info(
+                f"Chunk siblings found: {len(rows)} for parent_id={chunk.parent_id if chunk else None}"
+            )
             return [self._row_to_memory_item(row) for row in rows]
 
     async def aggregate_chunk_results(
         self, search_results: List[Tuple[MemoryItem, float]]
     ) -> List[Tuple[MemoryItem, float]]:
-        """
-        Aggregate chunk results by parent article to avoid redundant results
-        Returns the best-scoring chunk per parent article
-        """
+        logger.debug(f"Aggregating chunk results, input count: {len(search_results)}")
         parent_groups: defaultdict[UUID, List[Tuple[MemoryItem, float]]] = defaultdict(list)
         standalone_items: List[Tuple[MemoryItem, float]] = []
 
@@ -307,6 +339,7 @@ class DatabaseManager:
             aggregated_results.extend(top_chunks)
 
         aggregated_results.sort(key=lambda x: x[1], reverse=True)
+        logger.info(f"Aggregated results count: {len(aggregated_results)}")
         return aggregated_results
 
     def _row_to_memory_item(self, row) -> MemoryItem:
@@ -315,6 +348,7 @@ class DatabaseManager:
             embedding = row["embedding"].to_list()
         meta = json.loads(row["meta"]) if row["meta"] else None
 
+        logger.debug(f"Converted DB row to MemoryItem: {row['id']}")
         return MemoryItem(
             id=row["id"],
             parent_id=row["parent_id"],
@@ -331,6 +365,7 @@ class DatabaseManager:
         )
 
     def _row_to_relationship(self, row) -> Relationship:
+        logger.debug(f"Converted DB row to Relationship: {row['id']}")
         return Relationship(
             id=row["id"],
             source_node_id=row["source_node_id"],

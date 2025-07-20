@@ -936,6 +936,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-multipart" },
     { name = "sentence-transformers" },
+    { name = "tabulate" },
     { name = "timm" },
     { name = "torch" },
     { name = "torchvision" },
@@ -968,6 +969,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "python-multipart", specifier = ">=0.0.6" },
     { name = "sentence-transformers", specifier = ">=2.7.0" },
+    { name = "tabulate", specifier = ">=0.9.0" },
     { name = "timm", specifier = ">=1.0.17" },
     { name = "torch", specifier = ">=2.8.0" },
     { name = "torchvision", specifier = ">0.21" },
@@ -1882,6 +1884,15 @@ dependencies = [
 sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/d3d/3fe8df1e5a0b4/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517" }
 wheels = [
     { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/e09/1cc3e99d2141a/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5" },
+]
+
+[[package]]
+name = "tabulate"
+version = "0.9.0"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/009/5b12bf5966de5/tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/024/ca478df22e934/tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f" },
 ]
 
 [[package]]

@@ -74,6 +74,7 @@ class BackgroundTaskManager:
             worker = asyncio.create_task(self._worker_loop(f"Worker-{i}"))
             self.workers.append(worker)
 
+        logger.debug("Background workers started.")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -84,6 +85,7 @@ class BackgroundTaskManager:
         if self.workers:
             await asyncio.gather(*self.workers, return_exceptions=True)
         self.workers.clear()
+        logger.debug("Background workers stopped.")
 
     async def enqueue_task(self, task: BackgroundTask) -> UUID:
         await self.task_queue.put(task)
@@ -91,6 +93,7 @@ class BackgroundTaskManager:
         return task.task_id
 
     async def get_task_status(self, task_id: UUID) -> Optional[BackgroundTask]:
+        logger.debug(f"Getting status for task {task_id}")
         if task_id in self.running_tasks:
             return self.running_tasks[task_id]
 
@@ -98,18 +101,20 @@ class BackgroundTaskManager:
         return None
 
     async def _worker_loop(self, worker_name: str):
-        """Main worker loop - processes tasks from the queue"""
         logger.info(f"{worker_name} started")
 
         while True:
             try:
                 task = await self.task_queue.get()
+                logger.debug(f"{worker_name} picked up task {task.task_id} ({task.task_type})")
 
                 task.status = TaskStatus.PROCESSING
                 task.started_at = datetime.now(timezone.utc)
                 self.running_tasks[task.task_id] = task
 
-                logger.info(f"{worker_name} processing task {task.task_id}")
+                logger.info(
+                    f"{worker_name} processing task {task.task_id} of type {task.task_type}"
+                )
 
                 # Process the task
                 try:
@@ -135,7 +140,6 @@ class BackgroundTaskManager:
                 logger.error(f"{worker_name} error: {e}", exc_info=True)
 
     async def _process_task(self, task: BackgroundTask):
-        """Process a specific task based on its type"""
         if task.task_type == TaskType.WEB_SCRAPING:
             await self._process_web_scraping(task)
         elif task.task_type == TaskType.MEDIA_ANALYSIS:
@@ -186,10 +190,10 @@ class BackgroundTaskManager:
                 embedding_model_version=embedding_model_version,
             )
 
-            logger.info(f"Successfully analyzed image {image_uri} for item {task.source_item.id}")
+            logger.info(f"Successfully analyzed media {media_uri} for item {task.source_item.id}")
 
         except Exception as e:
-            logger.error(f"Failed to analyze image {image_uri}: {e}")
+            logger.error(f"Failed to analyze media {media_uri}: {e}")
             raise
 
     async def _process_audio_transcription(self, task: BackgroundTask):

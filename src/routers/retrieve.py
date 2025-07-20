@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from loguru import logger
+from tabulate import tabulate
 
 from src.routers.dependencies import (
     get_db_manager,
@@ -30,12 +32,20 @@ async def retrieve_memory_items(
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     reranking_service: RerankingService = Depends(get_rerank_service),
 ):
-    """
-    Retrieve and rank MemoryItems based on a query.
-
-    Performs semantic search using vector similarity and optionally
-    includes related items through the relationship graph.
-    """
+    params = [
+        ["query", query],
+        ["top_k", top_k],
+        ["filters", filters if filters else "None"],
+        ["start_date", start_date.isoformat() if start_date else "None"],
+        ["end_date", end_date.isoformat() if end_date else "None"],
+        ["content_types", content_types if content_types else "None"],
+        ["include_context", include_context],
+        ["enable_reranking", enable_reranking],
+    ]
+    logger.debug(
+        "Retrieve params:\n"
+        + tabulate(params, headers=["Field", "Value"], tablefmt="rounded_outline")
+    )
     if not db_manager or not embedding_service:
         raise HTTPException(status_code=503, detail="Services not initialized")
 
@@ -80,19 +90,17 @@ async def retrieve_memory_items(
             search_results = reranking_service.rerank(query, search_results, top_k)
 
         # Convert to response format
-        results = []
+        results: List[MemoryItemResponse] = []
         for item, score in search_results:
             results.append(MemoryItemResponse(item=item, score=score))
 
-        # Implement context retrieval if include_context is True
+        # Include context
         if include_context:
-            # Fetch related items for each result
-            enriched_results = []
+            enriched_results: List[Dict[str, Any]] = []
             for result in results:
                 related_items = await db_manager.get_related_items(result.item.id)
 
-                # Add related items as context
-                context = []
+                context: List[Dict[str, Any]] = []
                 for related_item, relationship_info in related_items:
                     context.append({"item": related_item, "relationship": relationship_info})
 
@@ -100,8 +108,10 @@ async def retrieve_memory_items(
                 enriched_result = {"item": result.item, "score": result.score, "context": context}
                 enriched_results.append(enriched_result)
 
+            logger.info(f"Retrieved {len(enriched_results)} results for query: {query!r}")
             return {"query": query, "results": enriched_results}
 
+        logger.info(f"Retrieved {len(results)} results for query: {query!r}")
         return RetrievalResponse(query=query, results=results)
 
     except HTTPException:
