@@ -114,9 +114,11 @@ class MediaAnalysisService:
                         content.extend([{"type": "image", "image": frame} for frame in frames])
                     if audio_path:
                         content.append({"type": "audio", "audio": audio_path})
+                    content.append({"type": "text", "text": prompt_text})
                     description = await loop.run_in_executor(None, self._model_inference, content)
             else:
                 content.append({"type": media_type, media_type: media_uri})
+                content.append({"type": "text", "text": prompt_text})
                 description = await loop.run_in_executor(None, self._model_inference, content)
 
             # Combine with existing caption if available
