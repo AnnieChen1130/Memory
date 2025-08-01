@@ -1,6 +1,7 @@
 # Nix/direnv artifacts
 result
 .direnv/
+test_data/
 
 # PostgreSQL data
 pg_data/

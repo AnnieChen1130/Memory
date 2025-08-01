@@ -57,41 +57,42 @@ async def ingest_memory_item(
         logger.info(f"MemoryItem ingested: {memory_item}")
 
         # Determine if this should trigger async processing
-        should_process_async = False
-        async_content_types = ["web_link", "image", "audio", "video", "long_text"]
-
         # If contains paragraphs or more than 20 sentences, mark as long_text
         if item_data.text_content:
             num_paragraphs = item_data.text_content.count("\n\n")
-            num_sentences = sum(item_data.text_content.count(p) for p in ".!?。！？……")
+            num_sentences = sum(1 for char in item_data.text_content if char in ".!?。！？……")
             if num_paragraphs > 0 or num_sentences > 20:
                 item_data = item_data.model_copy(update={"content_type": "long_text"})
 
-        if item_data.content_type in async_content_types:
-            if item_data.data_uri:
-                should_process_async = True
-            if item_data.content_type == "long_text":
-                should_process_async = True
-
         # Trigger async processing
-        if should_process_async and task_manager:
+        if task_manager:
             from src.uri_handler.task_queue import (
                 create_media_analysis_task,
+                create_text_analysis_task,
                 create_web_scraping_task,
             )
 
-            assert item_data.data_uri, "Data URI must be provided for async processing"
-            if item_data.content_type == "web_link":
-                task = create_web_scraping_task(memory_item, item_data.data_uri)
-                await task_manager.enqueue_task(task)
-            elif item_data.content_type in ["image", "video", "audio"]:
-                task = create_media_analysis_task(
-                    memory_item, item_data.data_uri, item_data.content_type
+            task = None
+            if item_data.content_type in ["web_link", "image", "video", "audio"]:
+                assert item_data.data_uri, "Data URI must be provided for async processing"
+                if item_data.content_type == "web_link":
+                    task = create_web_scraping_task(memory_item, item_data.data_uri)
+                elif item_data.content_type in ["image", "video", "audio"]:
+                    task = create_media_analysis_task(
+                        memory_item, item_data.data_uri, item_data.content_type
+                    )
+            elif item_data.content_type == "long_text":
+                assert item_data.text_content, "Text content must be provided for text analysis"
+                task = create_text_analysis_task(memory_item, item_data.text_content)
+            else:
+                logger.debug(
+                    f"Content type {item_data.content_type} doesn't trigger async processing."
                 )
+            if task:
                 await task_manager.enqueue_task(task)
-            logger.info(
-                f"Triggered async processing for item: {memory_item.id}, type: {item_data.content_type}"
-            )
+                logger.info(
+                    f"Enqueued task: {task.task_id} for item: {memory_item.id}, type: {item_data.content_type}"
+                )
 
         return IngestionResponse(status="ingested", item_id=memory_item.id)
 

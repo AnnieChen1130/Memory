@@ -16,8 +16,9 @@ from loguru import logger
 
 from src.services.embedding import EmbeddingService
 from src.services.media_analysis import MediaAnalysisService
+from src.uri_handler.split_text import split_text
 from src.utils.database import DatabaseManager
-from src.utils.models import MemoryItem
+from src.utils.models import MemoryItem, MemoryItemRaw
 
 
 class TaskType(Enum):
@@ -200,7 +201,45 @@ class BackgroundTaskManager:
         pass
 
     async def _process_text_analysis(self, task: BackgroundTask):
-        pass
+        text = task.data.get("text")
+        if not text:
+            raise ValueError("No text provided for text analysis task")
+
+        logger.info(f"Processing text analysis for item {task.source_item.id}")
+
+        chunks = split_text(text, chunk_size=512, overlap=50)
+
+        # Create and ingest child items for each chunk
+        for i, chunk_text in enumerate(chunks):
+            if not chunk_text.strip():
+                continue
+
+            # Create child memory item
+            child_item_raw = MemoryItemRaw(
+                content_type="text_chunk",
+                text_content=chunk_text,
+                data_uri=None,
+                event_timestamp=datetime.now(timezone.utc),
+                meta={"chunk_index": i},
+                reply_to_id=task.source_item.id,
+            )
+
+            # Generate embedding for the chunk
+            embedding = self.embedding_service.encode(chunk_text)
+            embedding_model_version = self.embedding_service.get_model_version()
+
+            # # Create the child memory item in database
+            child_item = await self.db_manager.create_memory_item(
+                item_data=child_item_raw,
+                analyzed_text=chunk_text,
+                embedding=embedding,
+                embedding_model_version=embedding_model_version,
+                parent_id=task.source_item.id,
+            )
+
+            logger.debug(f"Created chunk {i + 1}/{len(chunks)} as item {child_item.id}")
+
+        logger.info(f"Successfully created {len(chunks)} chunks for item {task.source_item.id}")
 
 
 # Factory function to create tasks
@@ -235,6 +274,16 @@ def create_audio_transcription_task(source_item: MemoryItem, audio_uri: str) -> 
     )
 
 
+def create_text_analysis_task(source_item: MemoryItem, text: str) -> BackgroundTask:
+    """Create a text analysis background task"""
+    return BackgroundTask(
+        task_id=uuid4(),
+        task_type=TaskType.TEXT_ANALYSIS,
+        source_item=source_item,
+        data={"text": text},
+    )
+
+
 # Import the missing function
 __all__ = [
     "BackgroundTaskManager",
@@ -244,4 +293,5 @@ __all__ = [
     "create_web_scraping_task",
     "create_media_analysis_task",
     "create_audio_transcription_task",
+    "create_text_analysis_task",
 ]
