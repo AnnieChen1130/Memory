@@ -1,14 +1,28 @@
-# Memory System API
+# Memory: (Yet Another) (Vectorized) Second Brain
 
 A backend service for ingesting, storing, and retrieving event logs with semantic search capabilities.
 
+## Foreword
+
+You might have seen applications claiming to be a "second brain" or "personal knowledge management" system for you: Obsidian, Roam Research, Logseq, ..., they bring you with great experience on writing, or journaling, they provide you with fancy knowledge graph, great convenience on bi-links, abundant extensible plugin system, etc. I used to be a fan of them to.
+
+but as a person who is always easily distracted and not so well-organized, sitting down at the table and starting to type long paragraphs seems a bit hard for me. 
+
+Luckily with a burst of LLMs since 2022, NLP become so popular that everyone get easily hands on related technologies, and empowered with AI-coding tools, we can starting to build something for our own. So this is it, the *Memory System*.
+
 ## Features
 
-- Ingest various content types (text, images, audio, video, web links)
-- Semantic search with embedding-based retrieval
-- Background processing for complex content
-- Relationship tracking between memory items
-- Reranking for improved search results
+This is a project focusing on **remembering** things and prepare for queries to **find** them later. 
+
+- Ingest **multimodal** content types (text, images, audio, video, web links, ...) with Gemma-3n;
+- Semantic search with embedding-based retrieval (and reranking);
+- Async Background processing for complex content
+- **Bi-directional relationship** tracking between items 
+
+TODO:
+- [ ] Web link scraping
+
+If you got any idea, plz open an [issue](https://github.com/Sunny-XXV/Memory/issues) or [pr](https://github.com/Sunny-XXV/Memory/pulls).
 
 ## Getting Started
 
