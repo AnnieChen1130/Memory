@@ -6,6 +6,9 @@ test_data/
 # PostgreSQL data
 pg_data/
 
+# MinIO data
+minio_data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

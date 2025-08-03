@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     # Database configuration
     database_url: str = "postgresql://sunya@/postgres?host=/home/sunya/dev/memory/pg_data"
 
+    # MinIO configuration
+    minio_url: str = "http://localhost:9876"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin"
+    minio_secure: bool = False
+
     # API configuration
     api_host: str = "0.0.0.0"
     api_port: int = 8000

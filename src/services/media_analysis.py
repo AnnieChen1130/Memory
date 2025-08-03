@@ -4,15 +4,20 @@ import os
 import subprocess
 import tempfile
 from contextlib import asynccontextmanager
+from datetime import timedelta
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 import torch
+from dotenv import load_dotenv
 from loguru import logger
+from minio import Minio
 from transformers import AutoModelForImageTextToText, AutoProcessor
 
 
 class MediaAnalysisService:
     def __init__(self, model_id: str = "google/gemma-3n-E4B-it"):
+        self.minio_client = None
         self.model_id = model_id
         self.model = None
         self.processor = None
@@ -38,6 +43,20 @@ class MediaAnalysisService:
                 logger.error(f"Failed to load model {self.model_id}: {e}", exc_info=True)
                 return None, None
 
+        load_dotenv()
+        minio_endpoint = os.getenv("MEMORY_MINIO_URL", "http://localhost:9876")
+        minio_access_key = os.getenv("MEMORY_MINIO_ACCESS_KEY", "minioadmin")
+        minio_secret_key = os.getenv("MEMORY_MINIO_SECRET_KEY", "minioadmin")
+        minio_secure = os.getenv("MEMORY_MINIO_SECURE", "false").lower() == "true"
+
+        self.minio_client = Minio(
+            minio_endpoint,
+            access_key=minio_access_key,
+            secret_key=minio_secret_key,
+            secure=minio_secure,
+        )
+        logger.info(f"Connected to MinIO at {minio_endpoint} with secure={minio_secure}")
+
         logger.info(f"Initializing media analysis model: {self.model_id}")
         try:
             loop = asyncio.get_event_loop()
@@ -62,7 +81,7 @@ class MediaAnalysisService:
 
         logger.info(f"Exiting ImageAnalysisService. Releasing resources for {self.model_id}...")
 
-        del self.model, self.processor
+        del self.model, self.processor, self.minio_client
         self.model, self.processor = None, None
         self._initialized = False
 
@@ -94,6 +113,9 @@ class MediaAnalysisService:
 
         logger.info(f"Analyzing media: {media_uri}")
         try:
+            accessible_url = await self._get_accessible_url(media_uri)
+            logger.info(f"Using accessible url: {accessible_url[:100]}...")
+
             if existing_caption:
                 prompt_text = (
                     f"Here is an caption to the {media_type}: '{existing_caption}'. "
@@ -109,7 +131,7 @@ class MediaAnalysisService:
 
             content: List[Dict[str, Any]] = []
             if media_type == "video":
-                async with self._extract_video_content(media_uri) as (frames, audio_path):
+                async with self._extract_video_content(accessible_url) as (frames, audio_path):
                     if frames:
                         content.extend([{"type": "image", "image": frame} for frame in frames])
                     if audio_path:
@@ -117,7 +139,7 @@ class MediaAnalysisService:
                     content.append({"type": "text", "text": prompt_text})
                     description = await loop.run_in_executor(None, self._model_inference, content)
             else:
-                content.append({"type": media_type, media_type: media_uri})
+                content.append({"type": media_type, media_type: accessible_url})
                 content.append({"type": "text", "text": prompt_text})
                 description = await loop.run_in_executor(None, self._model_inference, content)
 
@@ -233,3 +255,51 @@ class MediaAnalysisService:
             return f"{self.model_id}"
         else:
             return None
+
+    async def _get_accessible_url(self, uri: str) -> str:
+        if not uri.startswith(("http://", "https://")):
+            logger.debug(f"URI '{uri}' is a local path, not generating presigned URL.")
+            return uri
+
+        try:
+            loop = asyncio.get_event_loop()
+            bucket, key = await loop.run_in_executor(None, _parse_minio_url, uri)
+
+            logger.info(f"Generating presigned URL for object: {key} in bucket: {bucket}")
+
+            assert self.minio_client is not None, "need a minio client to get pre-signed url"
+            presigned_url = await loop.run_in_executor(
+                None,
+                self.minio_client.get_presigned_url,
+                "GET",
+                bucket,
+                key,
+                timedelta(minutes=15),
+            )
+            return presigned_url
+        except ValueError:
+            logger.warning(
+                f"Couldn't parse '{uri}' as MinIO URL. Assuming it's publicly accessible."
+            )
+            return uri
+        except Exception as e:
+            logger.error(f"Failed to generate presigned URL for {uri}: {e}", exc_info=True)
+            raise
+
+
+def _parse_minio_url(url: str) -> Tuple[str, str]:
+    """
+    Parse MinIO URL into components
+
+    Args:
+        url: MinIO URL in the format 'http://<host>:<port>/<bucket>/<object>'
+
+    Returns:
+        Tuple of (bucket, object)
+    """
+    parsed_url = urlparse(url)
+    url_parts = parsed_url.path.strip("/").split("/", 1)
+    if len(url_parts) < 2:
+        raise ValueError(f"Invalid MinIO URL format: {url}")
+
+    return url_parts[0], url_parts[1]

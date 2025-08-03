@@ -387,14 +387,14 @@ wheels = [
 
 [[package]]
 name = "flash-attn"
-version = "2.8.1"
+version = "2.8.2"
 source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
 dependencies = [
     { name = "einops" },
     { name = "torch" },
 ]
 wheels = [
-    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/fbe/83568418e456d/flash_attn-2.8.1-cp310-cp310-linux_aarch64.whl", hash = "sha256:fbe83568418e456d329d9c832ded3ee25305015336d10b1af5e9727f598df884" },
+    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/c90/358c76ebceadc/flash_attn-2.8.2-cp310-cp310-linux_aarch64.whl", hash = "sha256:c90358c76ebceadcd8aef5cf3746ef0026ea05a34688c401f6ab2ee1a6fee19a" },
 ]
 
 [[package]]
@@ -928,6 +928,7 @@ dependencies = [
     { name = "httpx" },
     { name = "librosa" },
     { name = "loguru" },
+    { name = "minio" },
     { name = "ninja" },
     { name = "numpy" },
     { name = "pgvector" },
@@ -961,6 +962,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "librosa", specifier = ">=0.11.0" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "minio", specifier = ">=7.2.16" },
     { name = "ninja", specifier = ">=1.11.1.4" },
     { name = "numpy", specifier = "<2" },
     { name = "pgvector", specifier = ">=0.2.0" },
@@ -983,6 +985,22 @@ dev = [
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "mypy", specifier = ">=1.17.0" },
     { name = "notebook", specifier = ">=7.4.4" },
+]
+
+[[package]]
+name = "minio"
+version = "7.2.16"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+dependencies = [
+    { name = "argon2-cffi" },
+    { name = "certifi" },
+    { name = "pycryptodome" },
+    { name = "typing-extensions" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/81e/365c8494d591d/minio-7.2.16.tar.gz", hash = "sha256:81e365c8494d591d8204a63ee7596bfdf8a7d06ad1b1507d6b9c1664a95f299a" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/928/8ab988ca57c18/minio-7.2.16-py3-none-any.whl", hash = "sha256:9288ab988ca57c181eb59a4c96187b293131418e28c164392186c2b89026b223" },
 ]
 
 [[package]]
@@ -1391,6 +1409,30 @@ source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
 sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/491/c8be9c040f539/pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6" }
 wheels = [
     { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/c37/02b6d3dd8c7ab/pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc" },
+]
+
+[[package]]
+name = "pycryptodome"
+version = "3.23.0"
+source = { registry = "https://pypi.jetson-ai-lab.io/jp6/cu126/+simple" }
+sdist = { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/447/700a657182d60/pycryptodome-3.23.0.tar.gz", hash = "sha256:447700a657182d60338bab09fdb27518f8856aecd80ae4c6bdddb67ff5da44ef" }
+wheels = [
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/187/058ab80b3281b/pycryptodome-3.23.0-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:187058ab80b3281b1de11c2e6842a357a1f71b42cb1e15bce373f3d238135c27" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/cfb/5cd445280c5b0/pycryptodome-3.23.0-cp37-abi3-macosx_10_9_x86_64.whl", hash = "sha256:cfb5cd445280c5b0a4e6187a7ce8de5a07b5f3f897f235caa11f1f435f182843" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/67b/d81fcbe34f43a/pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/c89/87bd3307a39bc/pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c8987bd3307a39bc03df5c8e0e3d8be0c4c3518b7f044b0f4c15d1aa78f52575" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/aa0/698f65e5b5704/pycryptodome-3.23.0-cp37-abi3-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:aa0698f65e5b570426fc31b8162ed4603b0c2841cbb9088e2b01641e3065915b" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/53e/cbafc2b55353e/pycryptodome-3.23.0-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:53ecbafc2b55353edcebd64bf5da94a2a2cdf5090a6915bcca6eca6cc452585a" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/156/df9667ad9f2ad/pycryptodome-3.23.0-cp37-abi3-musllinux_1_2_i686.whl", hash = "sha256:156df9667ad9f2ad26255926524e1c136d6664b741547deb0a86a9acf5ea631f" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/dea/827b4d55ee390/pycryptodome-3.23.0-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:dea827b4d55ee390dc89b2afe5927d4308a8b538ae91d9c6f7a5090f397af1aa" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/507/dbead45474b62/pycryptodome-3.23.0-cp37-abi3-win32.whl", hash = "sha256:507dbead45474b62b2bbe318eb1c4c8ee641077532067fec9c1aa82c31f84886" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/c75/b52aacc6c0c26/pycryptodome-3.23.0-cp37-abi3-win_amd64.whl", hash = "sha256:c75b52aacc6c0c260f204cbdd834f76edc9fb0d8e0da9fbf8352ef58202564e2" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/11e/eeb6917903876/pycryptodome-3.23.0-cp37-abi3-win_arm64.whl", hash = "sha256:11eeeb6917903876f134b56ba11abe95c0b0fd5e3330def218083c7d98bbcb3c" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/ddb/95b49df036ddd/pycryptodome-3.23.0-pp310-pypy310_pp73-macosx_10_15_x86_64.whl", hash = "sha256:ddb95b49df036ddd264a0ad246d1be5b672000f12d6961ea2c267083a5e19379" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/d8e/95564beb8782a/pycryptodome-3.23.0-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d8e95564beb8782abfd9e431c974e14563a794a4944c29d6d3b7b5ea042110b4" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/14e/15c081e912c4b/pycryptodome-3.23.0-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:14e15c081e912c4b0d75632acd8382dfce45b258667aa3c67caf7a4d4c13f630" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/a7f/c76bf273353dc/pycryptodome-3.23.0-pp310-pypy310_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:a7fc76bf273353dc7e5207d172b83f569540fc9a28d63171061c42e361d22353" },
+    { url = "https://pypi.jetson-ai-lab.io/root/pypi/+f/45c/69ad715ca1a94/pycryptodome-3.23.0-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:45c69ad715ca1a94f778215a11e66b7ff989d792a4d63b68dc586a1da1392ff5" },
 ]
 
 [[package]]
@@ -1993,7 +2035,7 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 wheels = [
-    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/ad9/a914891e6ebb0/torch-2.8.0-cp310-cp310-linux_aarch64.whl", hash = "sha256:ad9a914891e6ebb0839888b2b05851b720f49fd50b3964854c52735c8e9c7d7e" },
+    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/62a/1beee9f2f1470/torch-2.8.0-cp310-cp310-linux_aarch64.whl", hash = "sha256:62a1beee9f2f147076a974d2942c90060c12771c94740830327cae705b2595fc" },
 ]
 
 [[package]]
@@ -2006,7 +2048,7 @@ dependencies = [
     { name = "torch" },
 ]
 wheels = [
-    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/f56/f81fa39854c4d/torchvision-0.23.0-cp310-cp310-linux_aarch64.whl", hash = "sha256:f56f81fa39854c4de549b22c9fa4c40b76eaff8621eaaa081d62b770cbe6f845" },
+    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/907/c4c1933789645/torchvision-0.23.0-cp310-cp310-linux_aarch64.whl", hash = "sha256:907c4c1933789645ebb20dd9181d40f8647978e6bd30086ae7b01febb937d2d1" },
 ]
 
 [[package]]
@@ -2078,7 +2120,7 @@ dependencies = [
     { name = "setuptools" },
 ]
 wheels = [
-    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/af1/feae19b9abe36/triton-3.4.0-cp310-cp310-linux_aarch64.whl", hash = "sha256:af1feae19b9abe365741254d9366581bbf625647529865766696af48936aa7d6" },
+    { url = "https://pypi.jetson-ai-lab.io/jp6/cu126/+f/9da/4bcb8e8f0eba0/triton-3.4.0-cp310-cp310-linux_aarch64.whl", hash = "sha256:9da4bcb8e8f0eba00a097ad8c57b26102add499e520d67fb2d5362bebf976ca3" },
 ]
 
 [[package]]

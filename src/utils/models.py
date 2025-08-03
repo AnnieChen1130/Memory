@@ -13,7 +13,7 @@ from tabulate import tabulate
 class MemoryItemRaw(BaseModel):
     """Model for creating a new MemoryItem via the API"""
 
-    content_type: str = Field(..., description="Type of item, e.g., 'message', 'image', 'web_link'")
+    content_type: str = Field(..., description="'text', 'image', 'audio', 'video', 'web_link'")
     text_content: Optional[str] = Field(None, description="Raw text content")
     data_uri: Optional[str] = Field(None, description="Pointer to binary data like S3 URL")
     event_timestamp: datetime = Field(..., description="Real-world timestamp of the event")
