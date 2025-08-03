@@ -10,6 +10,74 @@ A backend service for ingesting, storing, and retrieving event logs with semanti
 - Relationship tracking between memory items
 - Reranking for improved search results
 
+## Getting Started
+
+We recommend using [nix](https://nixos.org/download/#nix-install-linux) (with `Flakes` enabled) and [uv](https://docs.astral.sh/uv/) for running this project. [direnv](https://direnv.net/) is also preferred.
+
+clone this repo first: `git clone https://github.com/Sunny-XXV/Memroy`
+
+```shell
+cd memory
+nix develop
+```
+
+### Set up PostgreSQL for vector database
+
+we've provided a command for initializing `PostgreSQL` with [pgvector](https://github.com/pgvector/pgvector) in `flake.nix`, just run:
+```shell
+start-db
+```
+Which would:
+1. Initialize a project-specific PostgreSQL server under the root dir of this project, default to `./pg_data`, shipped with pgvector;
+2. Start the Database server, at port `5432` by default.
+
+if successful, you'll see hint on how to test the database in your terminal. After that, you can run:
+```shell
+psql -h ./pg_data -U ${USER} -d ${USER} -f sql/init_tables.sql
+```
+to create tables this project relies on.
+
+What you can customize:
+1. change the port on which the database service listen;
+
+Change it in `./.envrc` if you're using direnv or export it first in you shell. the environment variable is `PGPORT`.
+
+### Set up MinIO for object storage
+
+A command is provided in `flake.nix` for MinIO initialization as well, run:
+```shell
+start-minio
+```
+Which would:
+1. Initialize a MinIO instance under the root dir of this project, default to `./minio_data`
+
+note that this command would take over the terminal, so you might want to run it in tmux or in the background.
+
+What you can customize:
+1. The port on which Minio listens: `MINIO_PORT`
+2. Port for access to MinIO dashboard: `MINIO_CONSOLE_PORT`
+3. Your user name for access to MinIO: `MINIO_ACCESS_KEY`
+4. Your password for access to MinIO: `MINIO_SECRET_KEY`
+
+either by changing them in `./.envrc` or export in shell.
+
+### Start the Memory service
+
+Just copy and customize **your own** `./.env` file and then run:
+```
+uv sync
+uv run main.py
+```
+and the service is ready.
+
+What you can customize (in `./.env`, for which you can get a template by `cp .env.example .env`):
+1. Your database url for access, which relies on your former steps on Setting up the PostgreSQL database.
+2. MinIO-related information, starting with prefix `MEMORY_MINIO_`. keep your access key and secret key safe 😉
+3. Host and port for accessing the **Memroy Service**, with prefix `MEMORY_API_`
+4. Model for embedding and reranking. don't change the embedding model/dimension unless you are ready for **re-calculating the embedding vectors for all your memory items!!!**
+5. other things. see in `.env.example`
+
+
 ## API Endpoints
 
 ### Health Check

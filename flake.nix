@@ -16,9 +16,9 @@
   
         start_db = pkgs.writeShellScriptBin "start-db" ''
           set -e
-  	      export PGPORT="''${PGPORT:-5432}"
-    	  export DB_DIR="$PWD/pg_data"
-	      export PATH="${pg_with_extension}/bin:$PATH"
+          export PGPORT="''${PGPORT:-5432}"
+          export DB_DIR="$PWD/pg_data"
+          export PATH="${pg_with_extension}/bin:$PATH"
     
   	      if [ ! -f "$DB_DIR/PG_VERSION" ]; then
   	        echo "--- Initializing PostgreSQL in $DB_DIR ---"
@@ -55,7 +55,7 @@
           echo "API Port:          $MINIO_PORT"
           echo "Console Port:      $MINIO_CONSOLE_PORT"
           echo "Access Key (User): $MINIO_ACCESS_KEY"
-          echo "Secret Key (Pass): $MINIO_SECRET_KEY"
+          # echo "Secret Key (Pass): $MINIO_SECRET_KEY"
           echo "Web UI:            http://127.0.0.1:$MINIO_CONSOLE_PORT"
           echo "------------------------------------"
           echo "To stop MinIO, press Ctrl+C in this terminal."
