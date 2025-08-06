@@ -8,7 +8,17 @@ You might have seen applications claiming to be a "second brain" or "personal kn
 
 but as a person who is always easily distracted and not so well-organized, sitting down at the table and starting to type long paragraphs seems a bit hard for me. 
 
-Luckily with a burst of LLMs since 2022, NLP become so popular that everyone get easily hands on related technologies, and empowered with AI-coding tools, we can starting to build something for our own. So this is it, the *Memory System*.
+Luckily with a burst of LLMs since 2022, NLP become so popular that everyone get easily hands on related technologies, and empowered with AI-coding tools, we can starting to build something for our own. So this is it, the *Synapse: a Memory System*. It won't try to think in place of you, it just tries to be your auxiliary hippocampus well: remembering and effortlessly finding, regradless of the way you stored it.
+
+## System Architecture
+
+The system is built on a decoupled, asynchronous architecture to ensure scalability and responsiveness. The core components work together to handle ingestion and retrieval pipelines.
+
+![Architecture](doc/images/Synapse-Aechitecture.png)
+
+Data Flow:
+- Ingestion: The FastAPI endpoint receives a request. Simple content like text is processed synchronously. Complex tasks (image analysis, web scraping) are pushed to a background task queue. The original file is saved to MinIO, while metadata and the resulting embedding are stored in PostgreSQL.
+- Retrieval: A user query is converted into an embedding vector. A similarity search is performed against the pgvector index in PostgreSQL, retrieving the top_k most relevant items.
 
 ## Features
 
@@ -22,7 +32,38 @@ This is a project focusing on **remembering** things and prepare for queries to 
 TODO:
 - [ ] Web link scraping
 
-If you got any idea, plz open an [issue](https://github.com/Sunny-XXV/Memory/issues) or [pr](https://github.com/Sunny-XXV/Memory/pulls).
+### How We Use Gemma for Multimodal Understanding
+We leverage Gemma's multimodal capabilities during the ingestion analysis phase to enrich the data before it's stored. This is a crucial step that makes our semantic search far more powerful.
+- For Image Content: An image file itself is not searchable. When an image is ingested, we don't just store it. We pass the image to Gemma, which generates a rich, descriptive text caption. This caption becomes the analyzed_text for the memory item. This allows a user to later find a photo by describing its content, e.g., "a photo of a whiteboard with architecture diagrams."
+- For Videos: like the image, but take a frame every other 1 seconds, send them along with the full sound track to Gemma for understanding.
+- For Web Links: Instead of just storing a URL, our background processor scrapes the page content. This raw HTML/text is then passed to Gemma for summarization. The concise summary is stored as analyzed_text and embedded, capturing the essence of the link.
+- For Long Text: Gemma can be used to extract key entities, topics, or provide a summary, creating a more dense and meaningful representation for embedding.
+By using Gemma to translate multimodal content into searchable text, we unify all information into a common semantic space.
+
+### Technical Choices & Justification
+Every technology in our stack was chosen to meet specific engineering goals: performance, scalability, and developer experience.
+| Component | Technology | Justification|
+|:-:|:-:|:-|
+| API Framework | FastAPI | Its asynchronous nature (ASGI) provides high performance for I/O-bound tasks. Pydantic integration ensures robust data validation out-of-the-box. |
+| Vector Database | PostgreSQL + pgvector | Integrated solution avoids the complexity of maintaining separate relational and vector databases. Enables powerful metadata filtering and efficient vector search in a single, transaction-safe environment. |
+| Object Storage | MinIO | Self-hostable, S3-compatible object store ideal for raw binary files (images, audio). Decouples file storage from application logic and database.|
+| Development Environment | Nix + direnv | Ensures a reproducible development environment for all contributors, eliminating "it works on my machine" issues and simplifying dependency management. |
+| Embedding Model | Qwen3-Embedding series | performs well for all kinds of downstream tasks, while flexible in size for choices. |
+| Multimodal Understanding | Gemma-3n-E4B | performs best among all multimodel that fits on an consumer grade hardware. | 
+
+### Challenges Overcome
+Building this system presented several key technical challenges:
+- Challenge: Handling Diverse, Multimodal Input.
+  - Problem: A memory system must accept anything from a one-line text to a full video. A single processing pipeline would be inefficient and complex.
+  - Solution: We designed a two-path ingestion system. A synchronous path for quick text entries and an asynchronous path using a task queue for time-consuming processes like media analysis with Gemma or web scraping. This keeps the API responsive while handling heavy workloads in the background.
+- Challenge: Bridging the Semantic Gap Between Query and Content.
+  - Problem: A user's search query ("notes from the project meeting") might not contain the exact keywords present in the stored item ("sync-up about the Q3 timeline").
+  - Solution: We address this with a state-of-the-art embedding model (Qwen/Qwen3-Embedding-4B) to capture the semantic meaning of text. More importantly, using Gemma to generate descriptive text for images and summaries for links (as described above) ensures that the meaning of non-textual content is also captured and made searchable.
+- Challenge: Ensuring Data Integrity and Relationships.
+  - Problem: Memory items are not always isolated; they can be replies or follow-ups. We needed a way to track these connections reliably.
+  - Solution: By using a relational database (PostgreSQL) as our foundation, we can create explicit Relationship tables with foreign key constraints. This allows for robust, bi-directional linking between items, a feature often difficult to implement in pure NoSQL or vector-only databases.
+
+If you encountered any problem or got any idea, plz open an [issue](https://github.com/Sunny-XXV/Memory/issues) or [pr](https://github.com/Sunny-XXV/Memory/pulls).
 
 ## Getting Started
 
