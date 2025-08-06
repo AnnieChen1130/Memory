@@ -1,4 +1,4 @@
-# Memory: (Yet Another) (Vectorized) Second Brain
+# Memory: (Yet Another) (Vectorized) Second ~~Brain~~ Hippocampus
 
 A backend service for ingesting, storing, and retrieving event logs with semantic search capabilities.
 
@@ -8,9 +8,13 @@ You might have seen applications claiming to be a "second brain" or "personal kn
 
 but as a person who is always easily distracted and not so well-organized, sitting down at the table and starting to type long paragraphs seems a bit hard for me. 
 
-Luckily with a burst of LLMs since 2022, NLP become so popular that everyone get easily hands on related technologies, and empowered with AI-coding tools, we can starting to build something for our own. So this is it, the *Synapse: a Memory System*. It won't try to think in place of you, it just tries to be your auxiliary hippocampus well: remembering and effortlessly finding, regradless of the way you stored it.
+Luckily with a burst of LLMs since 2022, NLP become so popular that everyone get easily hands on related technologies, and empowered with AI-coding tools, we can start to build something for our own. So this is it, the *Synapse: a Memory System*. It won't try to think in place of you, it just tries to be your auxiliary hippocampus well: remembering and effortlessly finding, regradless of the way you stored it.
+
+Also, the presence of Nvidia's Jetson series device makes inferencing on multiple LLMs with a consumer-grade hardware (that many of us are affordable) possible. Actually this project is mainly designated for and with a `Jetson AGX Orin`. This bad boy's 275 TOPS AI performance and 64GB of unified memory is brutal, while all of these runs on a ~50w power source! It can definately be your own AI server!
 
 ## System Architecture
+
+> **This project is still under development, and had not been tested on non-Jetson devices.**
 
 The system is built on a decoupled, asynchronous architecture to ensure scalability and responsiveness. The core components work together to handle ingestion and retrieval pipelines.
 
@@ -24,13 +28,16 @@ Data Flow:
 
 This is a project focusing on **remembering** things and prepare for queries to **find** them later. 
 
-- Ingest **multimodal** content types (text, images, audio, video, web links, ...) with Gemma-3n;
+- Ingest **multimodal** content types (text, images, audio, video, web links, ...) with `Gemma-3n`;
 - Semantic search with embedding-based retrieval (and reranking);
 - Async Background processing for complex content
 - **Bi-directional relationship** tracking between items 
+- Privacy: everything is self-hosted.
+- Self-adjustment: the developer is working on a simulated cognition model that updates the connection strength over time and usage of the system. Stay tuned!
 
 TODO:
 - [ ] Web link scraping
+- [ ] Automatically create/update links based on user behaviour
 
 ### How We Use Gemma for Multimodal Understanding
 We leverage Gemma's multimodal capabilities during the ingestion analysis phase to enrich the data before it's stored. This is a crucial step that makes our semantic search far more powerful.
